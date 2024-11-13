@@ -3,10 +3,20 @@ const express = require("express");
 const mongoose = require("mongoose");
 const http = require("http");
 const socketIO = require("socket.io");
+const cors = require("cors");
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
 
 app.set("io", io);
 

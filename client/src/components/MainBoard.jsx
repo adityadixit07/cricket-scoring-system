@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import io from "socket.io-client";
+import axios from "axios";
 
 const MainBoard = () => {
   const [match, setMatch] = useState({
@@ -37,7 +38,7 @@ const MainBoard = () => {
 
   // Socket connection
   useEffect(() => {
-    const socket = io("http://localhost:3000");
+    const socket = io("https://cricket-scoring-system.onrender.com/");
     socket.emit("join-match", "match-id"); // Replace with actual match ID
 
     socket.on("match-update", (data) => {
@@ -79,13 +80,11 @@ const MainBoard = () => {
     }
 
     try {
-      const response = await fetch("/api/delivery/match-id", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(deliveryData),
-      });
-
-      if (!response.ok) throw new Error("Delivery processing failed");
+      const response = await axios.post(
+        `https://cricket-scoring-system.onrender.com/api/delivery/${deliveryData.matchId}`,
+        deliveryData
+      );
+      console.log(response?.data);
 
       // Reset current delivery state
       setCurrentDelivery({
