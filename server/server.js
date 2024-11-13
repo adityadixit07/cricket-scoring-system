@@ -22,6 +22,11 @@ io.on("connection", (socket) => {
 
 app.use("/api", require("./routes/matchRoutes"));
 const PORT = process.env.PORT || 3001;
+
+app.get("/", (req, res) => {
+  res.send("server is running");
+});
+
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT} `);
 });
