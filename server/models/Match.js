@@ -28,6 +28,16 @@ const matchSchema = new mongoose.Schema({
     },
   },
   currentInnings: { type: String, enum: ["teamA", "teamB"] },
+  inningsDetails: {
+    teamA: {
+      striker: { type: String },
+      nonStriker: { type: String },
+    },
+    teamB: {
+      striker: { type: String },
+      nonStriker: { type: String },
+    },
+  },
   status: {
     type: String,
     enum: ["upcoming", "live", "completed"],

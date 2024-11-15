@@ -163,7 +163,6 @@ const updateBowler = async (req, res) => {
 const changeStriker = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-
   try {
     const { matchId } = req.params;
     const match = await Match.findById(matchId).session(session);
@@ -171,18 +170,26 @@ const changeStriker = async (req, res) => {
       throw new Error("Match not found");
     }
 
+    // Determine the current inning
+    const currentInnings = match.currentInnings;
+    const inningsDetails = match.inningsDetails[currentInnings];
+
     // Swap striker and non-striker
-    const temp = match.currentInnings.striker;
-    match.currentInnings.striker = match.currentInnings.nonStriker;
-    match.currentInnings.nonStriker = temp;
+    const temp = inningsDetails.striker;
+    inningsDetails.striker = inningsDetails.nonStriker;
+    inningsDetails.nonStriker = temp;
 
     await match.save({ session });
-
-    // Emit socket event
-    req.app.get("io").to(`match-${matchId}`).emit("match-update", {
-      type: "striker-change",
-      data: { match },
-    });
+    req.app
+      .get("io")
+      .to(`match-${matchId}`)
+      .emit("match-update", {
+        type: "striker-change",
+        data: {
+          striker: inningsDetails.striker,
+          nonStriker: inningsDetails.nonStriker,
+        },
+      });
 
     await session.commitTransaction();
     res.json({ message: "Striker changed successfully", match });
