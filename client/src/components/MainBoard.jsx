@@ -43,10 +43,10 @@ const MainBoard = () => {
   });
 
   const MATCH_ID = "6737161e71390ffffb023e46";
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = "https://cricket-scoring-system.onrender.com/api";
 
   useEffect(() => {
-    const socket = io("http://localhost:5000/");
+    const socket = io("https://cricket-scoring-system.onrender.com/");
     socket.emit("join-match", MATCH_ID);
 
     socket.on("match-update", (data) => {
