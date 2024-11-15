@@ -5,6 +5,7 @@ const http = require("http");
 const socketIO = require("socket.io");
 const cors = require("cors");
 const morgan = require("morgan");
+const insertDummyData = require("./models/Match");
 
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +36,7 @@ mongoose
   .connect(process.env.DB_URI)
   .then(() => {
     console.log("Connected to MongoDB");
+    insertDummyData();
   })
   .catch((error) => console.error("MongoDB connection error:", error));
 

@@ -89,7 +89,7 @@ async function insertDummyData() {
     const indiaPlayers = await Player.insertMany(indiaPlayersData);
     const australiaPlayers = await Player.insertMany(australiaPlayersData);
 
-    // 4. Create a match with detailed stats
+    // 4. Create a match with detailed stats, including striker/non-striker and bowler
     const matchData = {
       teamA: {
         name: indiaTeam.name,
@@ -118,6 +118,26 @@ async function insertDummyData() {
         },
       },
       currentInnings: "teamB",
+      inningsDetails: {
+        teamA: {
+          striker: indiaPlayers.find((player) => player.name === "KL Rahul")
+            ._id, // Set striker for team A
+          nonStriker: indiaPlayers.find(
+            (player) => player.name === "Rohit Sharma"
+          )._id, // Set non-striker for team A
+        },
+        teamB: {
+          striker: australiaPlayers.find(
+            (player) => player.name === "Steve Smith"
+          )._id, // Set striker for team B
+          nonStriker: australiaPlayers.find(
+            (player) => player.name === "David Warner"
+          )._id, // Set non-striker for team B
+        },
+      },
+      currentBowler: australiaPlayers.find(
+        (player) => player.name === "Pat Cummins"
+      )._id, // Set bowler
       status: "live",
       date: new Date(),
     };

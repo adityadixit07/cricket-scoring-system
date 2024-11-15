@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const matchSchema = new mongoose.Schema({
   teamA: {
-    name: String,
+    name: { type: String, required: true },
     score: { type: Number, default: 0 },
     wickets: { type: Number, default: 0 },
     overs: { type: Number, default: 0 },
@@ -15,7 +15,7 @@ const matchSchema = new mongoose.Schema({
     },
   },
   teamB: {
-    name: String,
+    name: { type: String, required: true },
     score: { type: Number, default: 0 },
     wickets: { type: Number, default: 0 },
     overs: { type: Number, default: 0 },
@@ -27,25 +27,36 @@ const matchSchema = new mongoose.Schema({
       legBye: { type: Number, default: 0 },
     },
   },
-  currentInnings: { type: String, enum: ["teamA", "teamB"] },
+  currentInnings: {
+    type: String,
+    enum: ["teamA", "teamB"],
+    default: "teamA",
+  },
   inningsDetails: {
     teamA: {
-      striker: { type: String },
-      nonStriker: { type: String },
+      striker: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+      nonStriker: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
     },
     teamB: {
-      striker: { type: String },
-      nonStriker: { type: String },
+      striker: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
+      nonStriker: { type: mongoose.Schema.Types.ObjectId, ref: "Player" },
     },
+  },
+  currentBowler: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Player",
   },
   status: {
     type: String,
     enum: ["upcoming", "live", "completed"],
     default: "upcoming",
   },
-  date: Date,
+  date: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Match = mongoose.model("Match", matchSchema);
 
-module.exports = Match;
+module.exports = Match; // Exporting the Match model correctly

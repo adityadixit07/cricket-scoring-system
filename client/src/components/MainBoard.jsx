@@ -81,7 +81,7 @@ const MainBoard = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:5000//api/delivery/${deliveryData.matchId}`,
+        `http://localhost:5000/api/delivery/${deliveryData.matchId}`,
         deliveryData
       );
       console.log(response?.data);
@@ -102,7 +102,8 @@ const MainBoard = () => {
         !deliveryData.isWide &&
         !deliveryData.isNoBall
       ) {
-        handleEndOfOver();
+        // handleEndOfOver();
+        changeStriker();
       }
     } catch (error) {
       console.error("Error processing delivery:", error);
@@ -112,9 +113,23 @@ const MainBoard = () => {
   // Handle end of over
   const handleEndOfOver = () => {
     // Swap striker and non-striker
-    const temp = striker;
-    setStriker(nonStriker);
-    setNonStriker(temp);
+    // const temp = striker;
+    // setStriker(nonStriker);
+    // setNonStriker(temp);
+    // we we integrate the api
+  };
+  const changeStriker = async () => {
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/match/6736babc6d18415038bdeaa6/change-striker`
+      );
+      console.log(response?.data);
+      const temp = striker;
+      setStriker(nonStriker);
+      setNonStriker(temp);
+    } catch (error) {
+      console.error("Error changing striker:", error);
+    }
   };
 
   // Handle player selection
@@ -134,6 +149,25 @@ const MainBoard = () => {
 
   const runs = [1, 2, 3, 4, 6, "W", "WD", "NB", "B", "LB"];
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5000/api/match/6736babc6d18415038bdeaa6`
+        );
+        const { match, players, striker, nonStriker } = response.data;
+
+        setMatch(match);
+        setPlayers(players);
+        setStriker(striker || players.batsmen[0]); // If no striker is set, assign the first batsman
+        setNonStriker(nonStriker || players.batsmen[1]); // If no non-striker is set, assign the second batsman
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="container mx-auto p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -147,6 +181,7 @@ const MainBoard = () => {
               <label className="font-medium">Striker:</label>
               <select
                 className="border rounded p-1"
+                value={striker?.id || ""}
                 onChange={(e) =>
                   handlePlayerSelect(
                     players.batsmen.find((p) => p.id === e.target.value),
@@ -166,6 +201,7 @@ const MainBoard = () => {
               <label className="font-medium">Non-Striker:</label>
               <select
                 className="border rounded p-1"
+                value={nonStriker?.id || ""}
                 onChange={(e) =>
                   handlePlayerSelect(
                     players.batsmen.find((p) => p.id === e.target.value),
