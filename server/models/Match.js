@@ -28,7 +28,11 @@ const matchSchema = new mongoose.Schema({
     },
   },
   currentInnings: { type: String, enum: ["teamA", "teamB"] },
-  status: { type: String, enum: ["upcoming", "live", "completed"] },
+  status: {
+    type: String,
+    enum: ["upcoming", "live", "completed"],
+    default: "upcoming",
+  },
   date: Date,
 });
 

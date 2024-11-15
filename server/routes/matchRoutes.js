@@ -1,18 +1,30 @@
-// matchRoutes.js
 const express = require("express");
-const { processDelivery } = require("../controller/deliveryController");
+const {
+  getCommentary,
+  processDelivery,
+  fetchInitialData,
+  updateMatchStatus,
+  editDelivery,
+  updateBatsman,
+  updateBowler,
+  changeStriker,
+  endOver,
+  undoDelivery,
+} = require("../controller/matchController");
 const router = express.Router();
-router.post("/delivery/:matchId", async (req, res) => {
-  try {
-    const delivery = await processDelivery(req.params.matchId, req.body);
-    req.app.get("io").emit(`match-${req.params.matchId}`, {
-      type: "new-delivery",
-      data: delivery,
-    });
-    res.json(delivery);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+
+// Existing routes
+router.post("/delivery/:matchId", processDelivery);
+router.get("/match/:matchId", fetchInitialData);
+
+// New routes
+router.put("/match/:matchId", updateMatchStatus);
+router.put("/delivery/:deliveryId", editDelivery);
+router.put("/player/:playerId/batting", updateBatsman);
+router.put("/player/:playerId/bowling", updateBowler);
+router.post("/match/:matchId/change-striker", changeStriker);
+router.post("/match/:matchId/end-over", endOver);
+router.post("/match/:matchId/undo-delivery", undoDelivery);
+router.get("/match/:matchId/commentary", getCommentary);
 
 module.exports = router;
