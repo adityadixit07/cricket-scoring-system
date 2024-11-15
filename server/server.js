@@ -5,7 +5,7 @@ const http = require("http");
 const socketIO = require("socket.io");
 const cors = require("cors");
 const morgan = require("morgan");
-const insertDummyData = require("./models/Match");
+const insertDummyData = require("./utils/insertDummyData");
 
 const app = express();
 const server = http.createServer(app);

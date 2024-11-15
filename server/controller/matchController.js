@@ -458,7 +458,12 @@ const fetchInitialData = async (req, res, next) => {
   try {
     const { matchId } = req.params;
 
-    // Fetch match details and populate striker, nonStriker, and currentBowler
+    // Validate matchId
+    if (!mongoose.Types.ObjectId.isValid(matchId)) {
+      return res.status(400).json({ message: "Invalid match ID format" });
+    }
+
+    // Fetch match details with populated fields
     const match = await Match.findById(matchId)
       .populate("inningsDetails.teamA.striker", "name runs ballsFaced")
       .populate("inningsDetails.teamA.nonStriker", "name runs ballsFaced")
@@ -467,64 +472,94 @@ const fetchInitialData = async (req, res, next) => {
       .populate("currentBowler", "name overs wickets runsGiven")
       .lean();
 
-    // Log the match data to debug
-    console.log("Fetched match data:", match);
-
-    // Ensure match is found and structured properly
+    // Check if match exists
     if (!match) {
       return res.status(404).json({ message: "Match not found" });
     }
 
-    // Check if teamA and teamB are present and initialized
-    if (!match.teamA || !match.teamB) {
-      return res.status(400).json({ message: "Missing team data in match" });
-    }
-
-    // Ensure inningsDetails are populated for both teams
-    const teamAInnings = match.inningsDetails?.teamA || {};
-    const teamBInnings = match.inningsDetails?.teamB || {};
-
-    // Fetch players for teamA and teamB if needed
-    const teamAPlayers = await Player.find({
-      _id: { $in: match.teamA?.players || [] },
-    });
-    const teamBPlayers = await Player.find({
-      _id: { $in: match.teamB?.players || [] },
-    });
-
-    // Attach fetched players to the match data
-    match.teamA.players = teamAPlayers;
-    match.teamB.players = teamBPlayers;
-
-    // Fetch current striker and non-striker based on inningsDetails
-    const currentInnings = match.currentInnings || "teamA"; // Default to teamA if not set
-    const strikerId = match.inningsDetails[currentInnings]?.striker;
-    const nonStrikerId = match.inningsDetails[currentInnings]?.nonStriker;
-
-    const striker = teamAPlayers
-      .concat(teamBPlayers)
-      .find((p) => p._id.equals(strikerId));
-    const nonStriker = teamAPlayers
-      .concat(teamBPlayers)
-      .find((p) => p._id.equals(nonStrikerId));
-
-    const data = {
-      match,
-      players: {
-        teamA: teamAPlayers,
-        teamB: teamBPlayers,
-      },
-      striker,
-      nonStriker,
+    // Initialize default structure if missing
+    const safeMatch = {
+      ...match,
+      teamA: match.teamA || { players: [] },
+      teamB: match.teamB || { players: [] },
+      inningsDetails: match.inningsDetails || { teamA: {}, teamB: {} },
     };
 
-    res.json({
+    // Safely fetch players with error handling
+    let teamAPlayers = [],
+      teamBPlayers = [];
+
+    if (safeMatch.teamA?.players?.length > 0) {
+      teamAPlayers = await Player.find({
+        _id: { $in: safeMatch.teamA.players },
+      })
+        .lean()
+        .catch((err) => {
+          console.error("Error fetching Team A players:", err);
+          return [];
+        });
+    }
+
+    if (safeMatch.teamB?.players?.length > 0) {
+      teamBPlayers = await Player.find({
+        _id: { $in: safeMatch.teamB.players },
+      })
+        .lean()
+        .catch((err) => {
+          console.error("Error fetching Team B players:", err);
+          return [];
+        });
+    }
+
+    // Determine current innings safely
+    const currentInnings = safeMatch.currentInnings || "teamA";
+    const currentInningsDetails =
+      safeMatch.inningsDetails[currentInnings] || {};
+
+    // Find striker and non-striker safely
+    const allPlayers = [...teamAPlayers, ...teamBPlayers];
+    const striker = currentInningsDetails.striker
+      ? allPlayers.find(
+          (p) => p._id.toString() === currentInningsDetails.striker.toString()
+        )
+      : null;
+    const nonStriker = currentInningsDetails.nonStriker
+      ? allPlayers.find(
+          (p) =>
+            p._id.toString() === currentInningsDetails.nonStriker.toString()
+        )
+      : null;
+
+    // Construct response data
+    const responseData = {
+      match: safeMatch,
+      players: {
+        teamA: teamAPlayers || [],
+        teamB: teamBPlayers || [],
+      },
+      striker: striker || null,
+      nonStriker: nonStriker || null,
+      currentInnings,
+    };
+
+    // Add debug logging in development
+    if (process.env.NODE_ENV === "development") {
+      console.log("Match Data:", JSON.stringify(responseData, null, 2));
+    }
+
+    return res.json({
       message: "Initial data fetched successfully",
-      data: data,
+      data: responseData,
     });
   } catch (error) {
-    console.error("Error fetching initial match data:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Error in fetchInitialData:", error);
+    return res.status(500).json({
+      message: "Internal server error while fetching match data",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+    });
   }
 };
 
